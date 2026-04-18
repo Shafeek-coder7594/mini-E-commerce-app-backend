@@ -14,11 +14,29 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({storage});
+const upload = multer({storage,
+  
+  limits:{fileSize:2*1024*1024},
+
+  fileFilter: (req, file, cb)=>{
+    if(file.mimetype.startsWith("image/")){
+      cb(null, true);
+    }else{
+      cb(new Error("only image files allowed"),false);
+    }
+  },
+});
 
 router.get("/products",getProducts);
 
-router.post("/products",upload.single("image"),addProduct);
+router.post("/products", (req, res, next) => {
+  upload.single("image")(req, res, function (err) {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+}, addProduct);
 
 module.exports = router;
 
